@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revista Digital Interactiva</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Open+Sans:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="http://www.turnjs.com/lib/turn.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        :root {
+            --page-width: 400px;
+            --page-height: 560px; /* Proporción A4 escalada */
+            --bg-color: #333;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+            font-family: 'Open Sans', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden; /* Evitar scroll en la vista de revista */
+        }
+
+        /* --- CONTENEDOR DE LA REVISTA --- */
+        #magazine-viewport {
+            width: calc(var(--page-width) * 2);
+            height: var(--page-height);
+            position: relative;
+            margin-top: 20px;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+        }
+
+        #magazine {
+            width: calc(var(--page-width) * 2);
+            height: var(--page-height);
+        }
+
+        /* --- ESTILOS DE LAS PÁGINAS --- */
+        .page {
+            width: var(--page-width);
+            height: var(--page-height);
+            background-color: white;
+            overflow: hidden;
+            position: absolute;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.1); /* Sombra interna para realismo */
+        }
+
+        .page-content {
+            padding: 20px;
+            height: 100%;
+            box-sizing: border-box;
+            font-size: 11px; /* Letra ajustada al tamaño de pantalla */
+        }
+
+        /* Estilos generales idénticos a la versión anterior pero escalados */
+        h1 { font-family: 'Montserrat'; text-transform: uppercase; color: #2c3e50; margin: 0; font-size: 18px; }
+        h3 { font-family: 'Montserrat'; color: #2c3e50; margin: 5px 0; font-size: 14px; }
+        p { line-height: 1.4; margin-bottom: 8px; text-align: justify; }
+        .img-box { width: 100%; height: 120px; background: #ddd; margin: 10px 0; overflow: hidden; border-radius: 5px; }
+        .img-box img { width: 100%; height: 100%; object-fit: cover; }
+        .page-num { position: absolute; bottom: 10px; right: 15px; color: #999; font-weight: bold; }
+        .two-cols { display: flex; gap: 10px; }
+        .col { flex: 1; }
+        
+        /* Cajas de colores */
+        .info-box { padding: 8px; border-radius: 5px; margin-bottom: 8px; font-size: 10px; border-left: 3px solid #555; background: #f5f5f5; }
+        
+        /* Portada Específica */
+        .cover { background: #2c3e50; color: white; text-align: center; display: flex; flex-direction: column; justify-content: center; }
+        .cover h1 { font-size: 32px; color: #f39c12; margin-bottom: 10px; }
+        .cover p { text-align: center; color: #ecf0f1; }
+
+        /* Contraportada */
+        .back-cover { background: #c0392b; color: white; display: flex; flex-direction: column; justify-content: center; text-align: center; }
+        .back-cover h1 { color: white; font-size: 24px; }
+
+        /* --- CONTROLES Y UI --- */
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+            z-index: 100;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #f39c12;
+            border: none;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+            font-family: 'Montserrat';
+            transition: 0.3s;
+        }
+        button:hover { background: #e67e22; transform: scale(1.05); }
+        button#download-btn { background: #27ae60; }
+
+        .hint { color: #aaa; margin-top: 10px; font-size: 12px; }
+
+        /* --- OCULTO PARA GENERAR PDF --- */
+        #pdf-container {
+            display: none; /* Se mantiene oculto, solo lo usa html2pdf */
+        }
+    </style>
+</head>
+<body>
+
+    <div id="magazine-viewport">
+        <div id="magazine">
+            
+            <div class="page cover">
+                <div class="page-content" style="display:flex; flex-direction:column; justify-content:center;">
+                    <h1>ROMPIENDO<br>EL SILENCIO</h1>
+                    <p style="letter-spacing: 2px; margin-top: 10px;">EDICIÓN INTERACTIVA 2025</p>
+                    <div class="img-box" style="height: 200px; margin: 30px 0;">
+                        <img src="https://images.unsplash.com/photo-1579208570378-8c970854bc23?auto=format&fit=crop&w=600&q=80">
+                    </div>
+                    <p>Guía visual sobre tipos, causas y prevención de la violencia.</p>
+                </div>
+            </div>
+
+            <div class="page">
+                <div class="page-content">
+                    <h1>ÍNDICE</h1>
+                    <div class="img-box" style="height: 100px;">
+                        <img src="https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=600&q=80">
+                    </div>
+                    <ul style="padding-left: 20px; line-height: 2;">
+                        <li>Pág 03: ¿Qué es la violencia?</li>
+                        <li>Pág 04: Tipos (Física/Psico)</li>
+                        <li>Pág 05: Género y Sexualidad</li>
+                        <li>Pág 06: Violencia Digital</li>
+                        <li>Pág 07: Causas y Raíces</li>
+                        <li>Pág 08: Consecuencias</li>
+                        <li>Pág 09: Prevención</li>
+                        <li>Pág 10: Soluciones</li>
+                    </ul>
+                    <span class="page-num">02</span>
+                </div>
+            </div>
+
+            <div class="page">
+                <div class="page-content">
+                    <h1 style="color: #2980b9;">¿QUÉ ES?</h1>
+                    <p>La OMS la define como el uso intencional de la fuerza o el poder.</p>
+                    <div class="info-box" style="border-color: #2980b9;">
+                        <strong>1. Autoinfligida:</strong> Daño a uno mismo.
+                    </div>
+                    <div class="info-box" style="border-color: #2980b9;">
+                        <strong>2. Interpersonal:</strong> Familia o comunidad.
+                    </div>
+                    <div class="info-box" style="border-color: #2980b9;">
+                        <strong>3. Colectiva:</strong> Social, política o económica.
+                    </div>
+                    <div class="img-box">
+                        <img src="https://images.unsplash.com/photo-1505051508004-cb9704277abb?auto=format&fit=crop&w=600&q=80">
+                    </div>
+                    <span class="page-num">03</span>
+                </div>
+            </div>
+
+            <div class="page">
+                <div class="page-content">
+                    <h1 style="color: #c0392b;">TIPOS (I)</h1>
+                    <div class="two-cols">
+                        <div class="col">
+                            <div class="info-box" style="background:#fdedec; border-color:#c0392b;">
+                                <h3>Física</h3>
+                                <p>Uso de fuerza: golpes, empujones. Deja marcas visibles.</p>
+                            </div>
+                            <div class="img-box" style="height: 140px;">
+                                <img src="https://images.unsplash.com/photo-1594824476960-e78591a68bdc?auto=format&fit=crop&w=600&q=80">
+                            </div>
+                        </div>
+                        <div class="col">
+                             <div class="info-box" style="background:#fdedec; border-color:#c0392b;">
+                                <h3>Psicológica</h3>
+                                <p>Insultos, humillación, control. Destruye la autoestima.</p>
+                            </div>
+                            <div class="info-box" style="background:#fdedec; border-color:#c0392b;">
+                                <h3>Económica</h3>
+                                <p>Control del dinero para quitar independencia.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <span class="page-num">04</span>
+                </div>
+            </div>
+
+            <div class="page">
+                <div class="page-content">
+                    <h1 style="color: #c0392b;">GÉNERO</h1>
+                    <p>Se basa en la desigualdad y afecta desproporcionadamente a la mujer.</p>
+                    <div class="img-box">
+                        <img src="https://images.unsplash.com/photo-1616169953108-9df515456208?auto=format&fit=crop&w=600&q=80">
+                    </div>
+                    <div class="info-box" style="border-color: #c0392b;">
+                        <h3>Violencia Sexual</h3>
+                        <p>Cualquier acto sexual sin consentimiento. Recuerda: No es No.</p>
+                    </div>
+                     <div class="info-box" style="border-color: #c0392b;">
+                        <h3>Feminicidio</h3>
+                        <p>La forma más extrema: asesinato de mujeres por razón de género.</p>
+                    </div>
+                    <span class="page-num">05</span>
+                </div>
+            </div>
+
+            <div class="page">
+                <div class="page-content">
+                    <h1 style="color: #d35400;">DIGITAL</h1>
+                    <div class="img-box">
+                        <img src="https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=600&q=80">
+                    </div>
+                    <p>El acoso cruza la pantalla.</p>
+                    <ul>
+                        <li><strong>Ciberacoso:</strong> Intimidación en redes.</li>
+                        <li><strong>Sextorsión:</strong> Amenaza con fotos íntimas.</li>
+                        <li><strong>Doxxing:</strong> Revelar datos privados.</li>
+                    </ul>
+                    <p><em>Características: Anonimato y viralidad.</em></p>
+                    <span class="page-num">06</span>
+                </div>
+            </div>
+
+            <div class="page">
+                <div class="page-content">
+                    <h1 style="color: #8e44ad;">CAUSAS</h1>
+                    <div class="two-cols">
+                        <div class="col">
+                            <h3 style="color:#8e44ad">Individuales</h3>
+                            <p>Abuso de sustancias, historia de maltrato previo.</p>
+                            <h3 style="color:#8e44ad">Sociales</h3>
+                            <p>Desigualdad, machismo, racismo, normas culturales.</p>
+                        </div>
+                        <div class="col">
+                            <div class="img-box" style="height: 180px;">
+                                <img src="https://images.unsplash.com/photo-1504192010806-4079c9e2819d?auto=format&fit=crop&w=600&q=80">
+                            </div>
+                        </div>
+                    </div>
+                    <span class="page-num">07</span>
+                </div>
+            </div>
+
+            <div class="page">
+                <div class="page-content">
+                    <h1 style="color: #8e44ad;">IMPACTO</h1>
+                    <div class="img-box">
+                        <img src="https://images.unsplash.com/photo-1457369804613-52c61a468e7d?auto=format&fit=crop&w=600&q=80">
+                    </div>
+                    <div class="info-box" style="border-color: #8e44ad; background: #f4ecf7;">
+                        <strong>Físicas:</strong> Lesiones, dolor crónico, discapacidad.
+                    </div>
+                    <div class="info-box" style="border-color: #8e44ad; background: #f4ecf7;">
+                        <strong>Psicológicas:</strong> Depresión, ansiedad, estrés postraumático (TEPT), suicidio.
+                    </div>
+                    <div class="info-box" style="border-color: #8e44ad; background: #f4ecf7;">
+                        <strong>Sociales:</strong> Costos sanitarios, ruptura familiar.
+                    </div>
+                    <span class="page-num">08</span>
+                </div>
+            </div>
+
+            <div class="page">
+                <div class="page-content">
+                    <h1 style="color: #27ae60;">PREVENIR</h1>
+                    <p>La educación es la vacuna.</p>
+                    <div class="img-box">
+                        <img src="https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?auto=format&fit=crop&w=600&q=80">
+                    </div>
+                    <ul style="color: #27ae60;">
+                        <li><span style="color:black">Educación Emocional</span></li>
+                        <li><span style="color:black">Cuestionar Estereotipos</span></li>
+                        <li><span style="color:black">Espacios Seguros</span></li>
+                    </ul>
+                    <p>Actuar antes de que ocurra la violencia.</p>
+                    <span class="page-num">09</span>
+                </div>
+            </div>
+
+             <div class="page">
+                <div class="page-content">
+                    <h1 style="color: #27ae60;">SOLUCIONES</h1>
+                    <div class="info-box" style="border-color: #27ae60;">
+                        <h3>Comunicación No Violenta</h3>
+                        <p>Observar sin juzgar, expresar sentimientos y pedir claramente.</p>
+                    </div>
+                    <div class="info-box" style="border-color: #27ae60;">
+                        <h3>Justicia Restaurativa</h3>
+                        <p>Reparar el daño y reintegrar, no solo castigar.</p>
+                    </div>
+                    <div class="img-box" style="height: 100px;">
+                        <img src="https://images.unsplash.com/photo-1520698109968-3bb8c0c978b7?auto=format&fit=crop&w=600&q=80">
+                    </div>
+                    <span class="page-num">10</span>
+                </div>
+            </div>
+
+            <div class="page">
+                <div class="page-content">
+                    <h1 style="color: #27ae60;">RESILIENCIA</h1>
+                    <div class="two-cols">
+                        <div class="col">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Malala_Yousafzai_2015.jpg/800px-Malala_Yousafzai_2015.jpg" style="width:100%; border-radius:50%; border: 3px solid #27ae60;">
+                        </div>
+                        <div class="col">
+                            <h3>Malala Yousafzai</h3>
+                            <p>Atacada por defender la educación, respondió con paz.</p>
+                        </div>
+                    </div>
+                    <hr>
+                    <h3 style="color:#27ae60;">Movimientos</h3>
+                    <p>#NiUnaMenos y #MeToo han demostrado que la unión colectiva cambia leyes.</p>
+                    <span class="page-num">11</span>
+                </div>
+            </div>
+
+            <div class="page">
+                <div class="page-content">
+                    <h1 style="color: #2980b9;">AYUDA</h1>
+                    <div class="img-box" style="height: 140px;">
+                        <img src="https://images.unsplash.com/photo-1527137342181-19aab11a8ee8?auto=format&fit=crop&w=600&q=80">
+                    </div>
+                    <div class="info-box" style="border-color: #2980b9; background: #eaf2f8;">
+                        <p><strong>El primer paso:</strong> Reconocer que nadie merece ser maltratado. No normalices el dolor.</p>
+                    </div>
+                    <div class="info-box" style="border-color: #2980b9; background: #eaf2f8;">
+                        <p><strong>Acompañar:</strong> Escucha sin juzgar. No presiones, ofrece recursos.</p>
+                    </div>
+                    <span class="page-num">12</span>
+                </div>
+            </div>
+
+            <div class="page back-cover">
+                <div class="page-content" style="display:flex; flex-direction:column; justify-content:center;">
+                    <h1>NO ESTÁS SOLA</h1>
+                    <div style="background:white; color:#c0392b; padding:20px; border-radius:10px; margin: 30px 0;">
+                        <h2>911</h2>
+                        <p>Línea de Emergencia</p>
+                    </div>
+                    <p>Busca ayuda profesional.<br>Rompe el silencio.</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="controls">
+        <button onclick="$('#magazine').turn('previous')">⬅ Anterior</button>
+        <button onclick="downloadPDF()" id="download-btn">⬇ Descargar PDF</button>
+        <button onclick="$('#magazine').turn('next')">Siguiente ➡</button>
+    </div>
+    <div class="hint">Usa las flechas del teclado o haz clic en las esquinas</div>
+
+    <script>
+        $(document).ready(function() {
+            // Inicializar Turn.js
+            $("#magazine").turn({
+                width: 800, // Doble del ancho de página
+                height: 560,
+                autoCenter: true,
+                display: 'double', // Vista de dos páginas
+                gradients: true,
+                acceleration: true
+            });
+
+            // Controles de teclado
+            $(window).bind('keydown', function(e){
+                if (e.keyCode==37) $('#magazine').turn('previous');
+                else if (e.keyCode==39) $('#magazine').turn('next');
+            });
+        });
+
+        // Función de descarga PDF
+        function downloadPDF() {
+            alert("Generando PDF... por favor espera unos segundos.");
+            
+            // Clonamos el contenido para darle formato A4 vertical para el PDF
+            // (Ya que la revista web es horizontal)
+            var element = document.createElement('div');
+            // Copiamos el contenido crudo de las páginas
+            var pages = document.querySelectorAll('.page-content');
+            
+            pages.forEach(function(page, index) {
+                var pageWrapper = document.createElement('div');
+                pageWrapper.innerHTML = page.innerHTML;
+                // Estilos para PDF (A4 Vertical)
+                pageWrapper.style.width = '190mm'; // Ajuste A4
+                pageWrapper.style.height = '277mm'; // Ajuste A4
+                pageWrapper.style.padding = '20mm';
+                pageWrapper.style.pageBreakAfter = 'always';
+                pageWrapper.style.backgroundColor = 'white';
+                pageWrapper.style.position = 'relative';
+                // Añadir número si no lo tiene
+                element.appendChild(pageWrapper);
+            });
+
+            var opt = {
+                margin:       0,
+                filename:     'Revista_Rompiendo_el_Silencio.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            // Ejecutar html2pdf
+            html2pdf().from(element).set(opt).save();
+        }
+    </script>
+</body>
+</html>
